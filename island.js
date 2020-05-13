@@ -6,9 +6,9 @@ import * as THREE from './node_modules/three/src/Three.js';
 import { GrWorld } from './world.js';
 import { GrObject } from './object.js';
 
-window.onload = grWorld;
+window.onload = grIsland;
 
-function grWorld() {
+function grIsland() {
     let grWorld = new GrWorld();
     let geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
     let material = new THREE.MeshNormalMaterial();
