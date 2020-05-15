@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 // @ts-check
 
+// adapt some ideas from CS 559 framwork
 import * as THREE from './node_modules/three/src/Three.js';
 
 import { GrWorld } from './world.js';
