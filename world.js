@@ -2,8 +2,12 @@
 // @ts-check
 
 import * as THREE from './node_modules/three/src/Three.js';
-import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { GrObject } from './object.js';
+import {
+    OrbitControls
+} from './node_modules/three/examples/jsm/controls/OrbitControls.js';
+import {
+    GrObject
+} from './object.js';
 
 export class GrWorld {
 
@@ -11,10 +15,19 @@ export class GrWorld {
         this.windowW = 1000;
         this.windowH = 600;
 
-        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, 10);
-        this.camera.position.z = 1;
+        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, 10000);
+        this.camera.position.set(250, 500, 1000);
+        this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
+
+        let ambientLight = new THREE.AmbientLight("white", 0.2);
+        this.scene.add(ambientLight);
+
+        let dirLight = new THREE.DirectionalLight("white", 0.8);
+        dirLight.position.set(250, 500, 1000);
+        dirLight.lookAt(0, 0, 0);
+        this.scene.add(dirLight);
 
         /** @type {GrObject[]} */
         this.objects = [];
@@ -39,6 +52,7 @@ export class GrWorld {
 
     animate() {
         let self = this;
+
         function loop() {
             self.objects.forEach(obj => {
                 obj.tick();
