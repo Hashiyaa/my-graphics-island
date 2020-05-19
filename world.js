@@ -11,12 +11,12 @@ import {
 
 export class GrWorld {
 
-    constructor() {
+    constructor(worldSize) {
         this.windowW = 1000;
         this.windowH = 600;
 
-        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, 10000);
-        this.camera.position.set(250, 500, 1000);
+        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, worldSize * 2);
+        this.camera.position.set(worldSize / 4, worldSize / 2, worldSize);
         this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
@@ -25,7 +25,7 @@ export class GrWorld {
         this.scene.add(ambientLight);
 
         let dirLight = new THREE.DirectionalLight("white", 0.8);
-        dirLight.position.set(250, 500, 1000);
+        dirLight.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
         dirLight.lookAt(0, 0, 0);
         this.scene.add(dirLight);
 

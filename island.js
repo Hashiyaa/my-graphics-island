@@ -19,15 +19,18 @@ terrainImg.src = "./kauai-heightmap.png";
 
 let canvas = document.createElement("canvas");
 
+let worldSize = 1000;
+let terrainH = 80;
+
 window.onload = grIsland;
 
 function grIsland() {
-    let grWorld = new GrWorld();
+    let grWorld = new GrWorld(worldSize);
 
-    let worldW = 1500;
-    let worldH = 1500;
-
-    let terrainGeom = new THREE.PlaneGeometry(terrainImg.width, terrainImg.height, terrainImg.width - 1, terrainImg.height - 1);
+    // Adapt ideas from https://www.lukaszielinski.de/blog/posts/2014/11/07/webgl-creating-a-landscape-mesh-with-three-dot-js-using-a-png-heightmap/
+    // and https://threejs.org/docs/#manual/en/introduction/How-to-update-things
+    // Terrain built from a height map
+    let terrainGeom = new THREE.PlaneBufferGeometry(terrainImg.width, terrainImg.height, terrainImg.width - 1, terrainImg.height - 1);
 
     canvas.width = terrainImg.width;
     canvas.height = terrainImg.height;
@@ -43,11 +46,13 @@ function grIsland() {
     }
     console.log(normPixels);
 
-    for (let i = 0, l = terrainGeom.vertices.length; i < l; i++) {
+    let vertices = terrainGeom.attributes.position.array;
+    for (let i = 0, l = terrainGeom.attributes.position.count; i < l; i++) {
         let terrainValue = normPixels[i] / 255;
-        terrainGeom.vertices[i].z += terrainValue * 200;
+        // @ts-ignore
+        vertices[3 * i + 2] += terrainValue * terrainH;
     }
-    terrainGeom.computeFaceNormals();
+    // terrainGeom.computeFaceNormals();
     terrainGeom.computeVertexNormals();
 
     let terrainMat = new THREE.MeshLambertMaterial({
@@ -61,7 +66,8 @@ function grIsland() {
     let terrain = new GrObject(terrainMesh, "terrain");
     grWorld.add(terrain);
 
-    let groundGeom = new THREE.BoxGeometry(worldW, worldH, 200);
+    // Ocean
+    let groundGeom = new THREE.BoxGeometry(worldSize, worldSize, 200);
     let groundMat = new THREE.MeshLambertMaterial({
         color: 0xCCFFCC,
         wireframe: false,
