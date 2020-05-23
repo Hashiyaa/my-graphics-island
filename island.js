@@ -79,5 +79,6 @@ function grIsland() {
     let ground = new GrObject(groundMesh, "ground");
     grWorld.add(ground);
 
+    // test new system
     grWorld.animate();
 }
