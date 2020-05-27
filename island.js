@@ -10,17 +10,17 @@ import {
 import {
     GrObject
 } from './object.js';
-import {
-    DoubleSide, Vector3
-} from './node_modules/three/src/Three.js';
+// import {
+//     DoubleSide, Vector3
+// } from './node_modules/three/src/Three.js';
 
 // let terrainImg = new Image();
 // terrainImg.src = "./kauai-heightmap.png";
 
 // let canvas = document.createElement("canvas");
 
-let worldSize = 1000;
-let terrainH = 150.0;
+let worldSize = 512;
+let terrainH = 70.0;
 
 window.onload = grIsland;
 
@@ -61,14 +61,26 @@ function grIsland() {
     //     side: DoubleSide
     // });
 
+    let dirtTexture = new THREE.TextureLoader().load("./images/dirt.jpg");
+    dirtTexture.wrapS = dirtTexture.wrapT = THREE.RepeatWrapping;
+    let grassTexture = new THREE.TextureLoader().load("./images/grass.jpg");
+    grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+    let rockTexture = new THREE.TextureLoader().load("./images/rock.jpg");
+    rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
+    let sandTexture = new THREE.TextureLoader().load("./images/sand.jpg");
+    sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
+
     let uniforms = THREE.UniformsUtils.merge([
         THREE.UniformsLib[ "ambient" ],
         THREE.UniformsLib[ "lights" ],
     ]);
 
-    uniforms["bumpTexture"] = {value: new THREE.TextureLoader().load("./kauai-heightmap.png")};
+    uniforms["bumpTexture"] = {value: new THREE.TextureLoader().load("./images/kauai-heightmap.png")};
     uniforms["bumpScale"] = {value: terrainH};
-    uniforms["color"] = {value: new THREE.Vector3(0.5, 1, 0.5)};
+    uniforms["dirtTexture"] = {value: dirtTexture};
+    uniforms["grassTexture"] = {value: grassTexture};
+    uniforms["rockTexture"] = {value: rockTexture};
+    uniforms["sandTexture"] = {value: sandTexture};
 
     let terrainMat = new THREE.ShaderMaterial({
         uniforms: uniforms,
@@ -82,19 +94,18 @@ function grIsland() {
     grWorld.add(terrain);
 
     // Ocean
-    let groundGeom = new THREE.BoxGeometry(worldSize, worldSize, 200);
-    let groundMat = new THREE.MeshLambertMaterial({
-        color: 0xCCFFCC,
-        wireframe: false,
-        side: DoubleSide
-    });
-    let groundMesh = new THREE.Mesh(groundGeom, groundMat);
-    groundMesh.rotateX(-Math.PI / 2);
-    groundMesh.position.y = -100;
-    let ground = new GrObject(groundMesh, "ground");
-    grWorld.add(ground);
+    // let groundGeom = new THREE.BoxGeometry(worldSize, worldSize, 100);
+    // let groundMat = new THREE.MeshLambertMaterial({
+    //     color: 0x0077BE,
+    //     wireframe: false,
+    //     side: DoubleSide
+    // });
+    // let groundMesh = new THREE.Mesh(groundGeom, groundMat);
+    // groundMesh.rotateX(-Math.PI / 2);
+    // groundMesh.position.y = -50;
+    // let ground = new GrObject(groundMesh, "ground");
+    // grWorld.add(ground);
 
-    // test new system
     grWorld.animate();
 }
 

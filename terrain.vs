@@ -4,11 +4,13 @@ uniform sampler2D bumpTexture;
 uniform float bumpScale;
 
 varying float vAmount;
-varying vec3 vNormal;
+// varying vec3 vNormal;
+varying vec2 vUv;
 
 void main()
 {
-    vNormal = normalMatrix * normal;
+    // vNormal = normalMatrix * normal;
+    vUv = uv;
 
     vec4 bumpData = texture2D(bumpTexture, uv);
 

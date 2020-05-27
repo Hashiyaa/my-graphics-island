@@ -24,10 +24,10 @@ export class GrWorld {
         let ambientLight = new THREE.AmbientLight("white", 0.2);
         this.scene.add(ambientLight);
 
-        let dirLight = new THREE.DirectionalLight("white", 0.8);
-        dirLight.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-        dirLight.lookAt(0, 0, 0);
-        this.scene.add(dirLight);
+        // let dirLight = new THREE.DirectionalLight("white", 0.8);
+        // dirLight.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+        // dirLight.lookAt(0, 0, 0);
+        // this.scene.add(dirLight);
 
         /** @type {GrObject[]} */
         this.objects = [];
