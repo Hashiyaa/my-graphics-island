@@ -11,12 +11,12 @@ import {
 
 export class GrWorld {
 
-    constructor(worldSize) {
+    constructor(worldW, worldH) {
         this.windowW = 1000;
         this.windowH = 600;
 
-        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, worldSize * 2);
-        this.camera.position.set(worldSize / 4, worldSize / 2, worldSize);
+        this.camera = new THREE.PerspectiveCamera(70, this.windowW / this.windowH, 0.01, worldH * 2);
+        this.camera.position.set(worldW / 4, worldH / 2, worldW);
         this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
