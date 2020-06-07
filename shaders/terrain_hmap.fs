@@ -1,11 +1,3 @@
-// #if NUM_DIR_LIGHTS > 0
-//     struct DirectionalLight {
-//         vec3 direction;
-//         vec3 color;
-//     };
-//     uniform DirectionalLight directionalLights[NUM_DIR_LIGHTS];
-// #endif
- 
 uniform vec3 ambientLightColor;
 
 uniform sampler2D dirtTexture;
@@ -20,7 +12,6 @@ varying vec2 vUv;
 void main() 
 {
     // vec3 nhat = normalize(vNormal);
-
     // float dirLight = abs(dot(nhat, directionalLights[0].direction));
 
     // vAmount ranges from 0.0 to 1.0

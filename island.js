@@ -1,29 +1,84 @@
 /*jshint esversion: 6 */
 // @ts-check
 
-// adapt some ideas from CS 559 framwork
 import * as THREE from './node_modules/three/src/Three.js';
-
 import {
-    GrWorld
-} from './world.js';
-import {
-    GrObject
-} from './object.js';
-// import {
-//     DoubleSide, Vector3
-// } from './node_modules/three/src/Three.js';
+    OrbitControls
+} from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 
-// let terrainImg = new Image();
-// terrainImg.src = "./kauai-heightmap.png";
+// adapt some ideas from CS 559 framwork @UW-Madison
+class GrObject {
+    /**
+     * @param {THREE.Mesh} mesh
+     * @param {string} name
+     */
+    constructor(mesh, name) {
+        this.mesh = mesh;
+        this.name = name;
+    }
 
-// let canvas = document.createElement("canvas");
+    // animate the object
+    tick() {}
+}
 
-let worldSize = [512, 1024];
+class GrWorld {
+    constructor() {
+        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
+        this.camera.position.set(0, 600, 0);
+        this.camera.lookAt(0, 0, 0);
+
+        this.scene = new THREE.Scene();
+
+        this.renderer = new THREE.WebGLRenderer({
+            // antialias: true
+        });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(this.renderer.domElement);
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
+        let ambientLight = new THREE.AmbientLight("white", 0.2);
+        this.scene.add(ambientLight);
+
+        // let dirLight = new THREE.DirectionalLight("white", 0.8);
+        // dirLight.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+        // dirLight.lookAt(0, 0, 0);
+        // this.scene.add(dirLight);
+
+        /** @type {GrObject[]} */
+        this.objects = [];
+    }
+
+    /**
+     * @param {GrObject} obj
+     */
+    add(obj) {
+        this.objects.push(obj);
+        this.scene.add(obj.mesh);
+    }
+
+    animate() {
+        let self = this;
+
+        function loop() {
+            self.objects.forEach(obj => {
+                obj.tick();
+            });
+            self.controls.update();
+            self.renderer.render(self.scene, self.camera);
+            requestAnimationFrame(loop);
+        }
+        loop();
+    }
+}
+
+// world related params
+let worldSize = [512, 512];
 let terrainH = 70.0;
 
-let grWorld = new GrWorld(worldSize[0], worldSize[1]);
+let grWorld = new GrWorld();
 
+// load textures
 let dirtTexture = new THREE.TextureLoader().load("./images/dirt.jpg");
 dirtTexture.wrapS = dirtTexture.wrapT = THREE.RepeatWrapping;
 let grassTexture = new THREE.TextureLoader().load("./images/grass.jpg");
@@ -33,9 +88,102 @@ rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
 let sandTexture = new THREE.TextureLoader().load("./images/sand.jpg");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
 
-window.onload = function() {
-    terrain1();
-    terrain2();
+/**
+ * Create a terrain
+ * 
+ * @param {string} mode rgbamap or hmap
+ */
+function terrain(mode, position) {
+    // Terrain built from a height map
+    let terrainGeom = new THREE.PlaneBufferGeometry(worldSize[0], worldSize[1], worldSize[0] - 1, worldSize[1] - 1);
+
+    // For shaders to interact with THREE.js lights
+    let uniforms = THREE.UniformsUtils.merge([
+        THREE.UniformsLib["ambient"],
+        THREE.UniformsLib["lights"],
+    ]);
+
+    // assign uniform values
+    uniforms["bumpTexture"] = {
+        value: new THREE.TextureLoader().load("./images/kauai-heightmap.png")
+    };
+    if (mode === "rgbamap")
+        uniforms["splatMap"] = {
+            value: new THREE.TextureLoader().load("./images/rgba_splatmap.jpg")
+        };
+    uniforms["bumpScale"] = {
+        value: terrainH
+    };
+    uniforms["dirtTexture"] = {
+        value: dirtTexture
+    };
+    uniforms["grassTexture"] = {
+        value: grassTexture
+    };
+    uniforms["rockTexture"] = {
+        value: rockTexture
+    };
+    uniforms["sandTexture"] = {
+        value: sandTexture
+    };
+
+    let params = {
+        uniforms: uniforms,
+        lights: true
+    }
+
+    let terrainMat = shaderMat("./shaders/terrain_" + mode + ".vs", "./shaders/terrain_" + mode + ".fs", params);
+
+    let terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
+    terrainMesh.rotateX(-Math.PI / 2);
+    terrainMesh.position.set(position.x, position.y, position.z);
+
+    let terrain = new GrObject(terrainMesh, "terrain_" + mode);
+    grWorld.add(terrain);
+}
+
+/**
+ * @param {string} vs
+ * @param {string} fs
+ * @param {THREE.ShaderMaterialParameters} params
+ */
+function shaderMat(vs, fs, params) {
+    let loader = new THREE.FileLoader();
+
+    let terrainMat = new THREE.ShaderMaterial(params);
+
+    loader.load(vs,
+        /* onload = */
+        function (data) {
+            // console.log(vs + " loaded successfully.")
+            terrainMat.vertexShader = data.toString();
+            terrainMat.needsUpdate = true;
+        }
+    );
+    loader.load(fs,
+        /* onload = */
+        function (data) {
+            // console.log(fs + " loaded successfully.")
+            terrainMat.fragmentShader = data.toString();
+            terrainMat.needsUpdate = true;
+        }
+    );
+
+    return terrainMat;
+}
+
+window.onresize = function () {
+    grWorld.camera.aspect = window.innerWidth / window.innerHeight;
+    grWorld.camera.updateProjectionMatrix();
+    grWorld.renderer.setSize(window.innerWidth, window.innerHeight);
+    // grWorld.controls.handleResize();
+}
+
+window.onload = function () {
+    // rgbamap or hmap
+    terrain("rgbamap", new THREE.Vector3(256, 0, 0));
+    terrain("hmap", new THREE.Vector3(-256, 0, 0));
+
     // Ocean
     // let groundGeom = new THREE.BoxGeometry(worldSize[0], worldSize[1], 100);
     // let groundMat = new THREE.MeshLambertMaterial({
@@ -50,129 +198,4 @@ window.onload = function() {
     // grWorld.add(ground);
 
     grWorld.animate();
-}
-
-// Create a terrain with a heightmap
-function terrain1() {
-    // Adapt ideas from https://www.lukaszielinski.de/blog/posts/2014/11/07/webgl-creating-a-landscape-mesh-with-three-dot-js-using-a-png-heightmap/
-    // and https://threejs.org/docs/#manual/en/introduction/How-to-update-things
-    // Terrain built from a height map
-    let terrainGeom = new THREE.PlaneBufferGeometry(worldSize[0], worldSize[1] / 2, worldSize[0] - 1, worldSize[1] / 2 - 1);
-
-    // canvas.width = terrainImg.width;
-    // canvas.height = terrainImg.height;
-    // canvas.getContext('2d').drawImage(terrainImg, 0, 0, terrainImg.width, terrainImg.height);
-    // let terrainData = canvas.getContext('2d').getImageData(0, 0, terrainImg.width, terrainImg.height).data;
-    // console.log(terrainData);
-
-    // let normPixels = [];
-
-    // for (let i = 0, n = terrainData.length; i < n; i += 4) {
-    //     // get the average value of R, G and B.
-    //     normPixels.push((terrainData[i] + terrainData[i + 1] + terrainData[i + 2]) / 3);
-    // }
-    // console.log(normPixels);
-
-    // let vertices = terrainGeom.attributes.position.array;
-    // for (let i = 0, l = terrainGeom.attributes.position.count; i < l; i++) {
-    //     let terrainValue = normPixels[i] / 255;
-    //     // @ts-ignore
-    //     vertices[3 * i + 2] += terrainValue * terrainH;
-    // }
-    // // terrainGeom.computeFaceNormals();
-    // terrainGeom.computeVertexNormals();
-
-    // let terrainMat = new THREE.MeshLambertMaterial({
-    //     color: 0xCCFFCC,
-    //     wireframe: false,
-    //     side: DoubleSide
-    // });
-
-    let uniforms = THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "ambient" ],
-        THREE.UniformsLib[ "lights" ],
-    ]);
-
-    uniforms["bumpTexture"] = {value: new THREE.TextureLoader().load("./images/kauai-heightmap.png")};
-    uniforms["bumpScale"] = {value: terrainH};
-    uniforms["dirtTexture"] = {value: dirtTexture};
-    uniforms["grassTexture"] = {value: grassTexture};
-    uniforms["rockTexture"] = {value: rockTexture};
-    uniforms["sandTexture"] = {value: sandTexture};
-
-    let terrainMat = new THREE.ShaderMaterial({
-        uniforms: uniforms,
-        lights: true
-    });
-    loadShaders('./terrain1.vs', './terrain1.fs', terrainMat);
-
-    let terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
-    terrainMesh.rotateX(-Math.PI / 2);
-    terrainMesh.translateY(-512 / 2);
-    let terrain = new GrObject(terrainMesh, "terrain1");
-    grWorld.add(terrain);
-}
-
-// Create a terrain with a heightmap and a rgb splatmap
-function terrain2() {
-    let terrainGeom = new THREE.PlaneBufferGeometry(worldSize[0], worldSize[1] / 2, worldSize[0] - 1, worldSize[1] / 2 - 1);
-
-    let uniforms = THREE.UniformsUtils.merge([
-        THREE.UniformsLib[ "ambient" ],
-        THREE.UniformsLib[ "lights" ],
-    ]);
-
-    uniforms["bumpTexture"] = {value: new THREE.TextureLoader().load("./images/kauai-heightmap.png")};
-    uniforms["bumpScale"] = {value: terrainH};
-    uniforms["splatMap"] = {value: new THREE.TextureLoader().load("./images/rgba_splatmap.jpg")};
-    uniforms["dirtTexture"] = {value: dirtTexture};
-    uniforms["grassTexture"] = {value: grassTexture};
-    uniforms["rockTexture"] = {value: rockTexture};
-    uniforms["sandTexture"] = {value: sandTexture};
-
-    let terrainMat = new THREE.ShaderMaterial({
-        uniforms: uniforms,
-        lights: true
-    });
-    loadShaders('./terrain2.vs', './terrain2.fs', terrainMat);
-
-    let terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
-    terrainMesh.rotateX(-Math.PI / 2);
-    terrainMesh.translateY(512 / 2);
-    let terrain = new GrObject(terrainMesh, "terrain2");
-    grWorld.add(terrain);
-}
-
-/**
- * @param {string} vs
- * @param {string} fs
- * @param {THREE.ShaderMaterial} material
- */
-function loadShaders(vs, fs, material)
-{
-    let loader = new THREE.FileLoader();
-    loader.load(vs,
-            /* onload = */ function(data) {
-                material.vertexShader = data.toString();
-                material.needsUpdate = true;
-            },
-            /* onprogress = */ function(xhr) {
-            },
-            /* onerror = */ function(err) {
-                console.log(`Failed to Load Vertex Shader (file:${vs})`);
-                console.log(`Error: ${err}`);
-            }
-    );
-    loader.load(fs,
-        /* onload = */ function(data) {
-            material.fragmentShader = data.toString();
-            material.needsUpdate = true;
-        },
-        /* onprogress = */ function(xhr) {
-        },
-        /* onerror = */ function(err) {
-            console.log(`Failed to Load Fragment Shader (file:${fs})`);
-            console.log(`Error: ${err}`);
-        }
-    );
 }

@@ -8,7 +8,6 @@ uniform sampler2D sandTexture;
 uniform sampler2D grassTexture;
 uniform sampler2D rockTexture;
 
-// varying float vAmount;
 // varying vec3 vNormal;
 varying vec2 vUv;
 

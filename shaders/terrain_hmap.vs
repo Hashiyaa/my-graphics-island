@@ -11,12 +11,9 @@ void main()
 {
     // vNormal = normalMatrix * normal;
     vUv = uv;
-
     vec4 bumpData = texture2D(bumpTexture, uv);
-
     vAmount = (bumpData.r + bumpData.g + bumpData.b) / 3.;
 
     vec3 newPos = position + normal * bumpScale * vAmount;
-
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.);
 }
